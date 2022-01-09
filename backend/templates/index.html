@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Tracker</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        header{
+            background-color: black;
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 10px;
+            text-align: center;
+        }
+        form{
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            width: 50%;
+            border: 1px solid black;
+            border-radius: 8px;
+        }
+        form h2{
+            text-align: center;
+        }
+        input{
+            margin: 8px;
+            padding: 4px;
+            border-radius: 3px;
+            border: 1px solid gray;
+            font-size: large;
+        }
+        #allItems{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        .item_div{
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid black;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+        }
+        #updateItem{
+            display: none;
+        }
+        button{
+            margin: 5px;
+            padding: 5px;
+            width: 55px;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded',()=>{
+            loadItems()
+            document.querySelector('#addNewItemForm').onsubmit = () => {
+                let csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                fetch('/itemApi',{
+                    method: "POST",
+                    headers: {'X-CSRFToken': csrftoken},
+                    body: JSON.stringify({
+                        "name":document.querySelector('#itemName').value,
+                        "price":document.querySelector('#itemPrice').value,
+                        "quantity":document.querySelector('#itemQuantity').value,
+                    })
+                })
+                .then(response=>response.json())
+                .then(response=>alert(response))
+                document.querySelector('#itemName').value=""
+                document.querySelector('#itemPrice').value=""
+                document.querySelector('#itemQuantity').value=""
+                loadItems()
+                return false
+            }
+        })
+        function loadItems(){
+            document.querySelector('#allItems').innerHTML=""
+            fetch('/itemApi')
+            .then(response=>response.json())
+            .then(response=>response.forEach(item => showItem(item)))
+        }
+        function showItem(item){
+            let item_div=document.createElement('div')
+            item_div.className="item_div"
+            item_div.id=`item${item.id}`
+            let itemName=document.createElement('h3')
+            itemName.innerHTML=`Name = ${item.name}`
+            let itemPrice=document.createElement('span')
+            itemPrice.innerHTML=`Price = ${item.price}`
+            let itemQuantity=document.createElement('span')
+            itemQuantity.innerHTML=`Quantity = ${item.quantity}`
+            let updateBtn=document.createElement('button')
+            updateBtn.innerHTML="Update"
+            updateBtn.onclick = function(){
+                document.querySelector('#allItems').style.display='none'
+                document.querySelector('#updateItem').style.display='block'
+                document.querySelector('#new_itemName').value=item.name
+                document.querySelector('#new_itemPrice').value=item.price
+                document.querySelector('#new_itemQuantity').value=item.quantity
+                document.querySelector('#updateItemForm').onsubmit = () => {
+                    let csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                    fetch(`/itemApi/${item.id}`,{
+                        method:"PUT",
+                        headers: {'X-CSRFToken': csrftoken},
+                        body: JSON.stringify({
+                            "name":item.name,
+                            "price":document.querySelector('#new_itemPrice').value,
+                            "quantity":document.querySelector('#new_itemQuantity').value,
+                        })
+                    })
+                    .then(response=>response.json)
+                    .then(response=>alert(response))
+                    loadItems()
+                    document.querySelector('#allItems').style.display='flex'
+                    document.querySelector('#updateItem').style.display='none'
+                    return false
+                }
+            }
+            let deleteBtn=document.createElement('button')
+            deleteBtn.innerHTML="Delete"
+            deleteBtn.onclick = function(){
+                fetch(`/itemApi/${item.id}`,{
+                    method:"DELETE"
+                })
+                .then(response=>response.json())
+                .then(response=>alert(response))
+                this.parentElement.remove()
+            }
+            item_div.append(itemName)
+            item_div.append(itemPrice)
+            item_div.append(itemQuantity)
+            item_div.append(updateBtn)
+            item_div.append(deleteBtn)
+            document.querySelector('#allItems').append(item_div)
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Inventory Tracker</h1>
+    </header>
+    <div id="addNewItem">
+        <form id="addNewItemForm">
+            <h2>Add new Item</h2>
+            {% csrf_token %}
+            <input type="text" placeholder="Name" id="itemName" required>
+            <input type="number" placeholder="Price(for 1 item)" step="0.01" min="0.01" id="itemPrice" required>
+            <input type="number" placeholder="Quantity" min="1" id="itemQuantity" required>
+            <div>
+                <input type="submit" value="Add">
+            </div>
+        </form>
+    </div>
+    <div id="allItems"></div>
+    <div id="updateItem">
+        <form id="updateItemForm">
+            <h2>Update Item</h2>
+            <input type="text" placeholder="Name" required disabled id="new_itemName">
+            <input type="number" placeholder="Price(for 1 item)" step="0.01" min="0.01" id="new_itemPrice" required>
+            <input type="number" placeholder="Quantity" min="1" id="new_itemQuantity" required>
+            <div>    
+                <input type="submit" value="Update">
+            </div>
+        </form>
+    </div>
+</body>
+</html>
