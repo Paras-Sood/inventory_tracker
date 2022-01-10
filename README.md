@@ -1,4 +1,4 @@
-# inventory_tracker
+# inventory_tracker - Shopify Technical Challenge
 An inventory tracking web application that supports CRUD operations.
 ```
 User can
