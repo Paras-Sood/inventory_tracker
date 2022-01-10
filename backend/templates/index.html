@@ -60,6 +60,11 @@
     <script>
         document.addEventListener('DOMContentLoaded',()=>{
             loadItems()
+            document.querySelector('#exportData').onclick = () => {
+                fetch('/exportData')
+                .then(response=>response.json())
+                .then(response=>alert(response))
+            }
             document.querySelector('#addNewItemForm').onsubmit = () => {
                 let csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
                 fetch('/itemApi',{
@@ -72,11 +77,13 @@
                     })
                 })
                 .then(response=>response.json())
-                .then(response=>alert(response))
+                .then(response=>{
+                    alert(response);
+                    loadItems()
+                })
                 document.querySelector('#itemName').value=""
                 document.querySelector('#itemPrice').value=""
                 document.querySelector('#itemQuantity').value=""
-                loadItems()
                 return false
             }
         })
@@ -115,11 +122,13 @@
                             "quantity":document.querySelector('#new_itemQuantity').value,
                         })
                     })
-                    .then(response=>response.json)
-                    .then(response=>alert(response))
-                    loadItems()
-                    document.querySelector('#allItems').style.display='flex'
-                    document.querySelector('#updateItem').style.display='none'
+                    .then(response=>response.json())
+                    .then(response=>{
+                        alert(response)
+                        loadItems()
+                        document.querySelector('#allItems').style.display='flex'
+                        document.querySelector('#updateItem').style.display='none'
+                    })
                     return false
                 }
             }
@@ -145,6 +154,7 @@
 <body>
     <header>
         <h1>Inventory Tracker</h1>
+        <button style="position: absolute;width: 150px;top: 10px;right: 10px;" id="exportData">Export Data to csv</button>
     </header>
     <div id="addNewItem">
         <form id="addNewItemForm">

@@ -5,8 +5,9 @@ from rest_framework.views import APIView
 import json
 from rest_framework import status
 from backend.models import Item, ItemSerializer
+from django.http import JsonResponse
+import csv
 
-# Create your views here.
 def index(request):
     return render(request,"index.html")
 
@@ -42,3 +43,12 @@ class ItemAPIView(APIView):
             raise Http404
         item.delete()
         return Response(f"Deleted item = {item}")
+
+def exportData(request):
+    header=['id','Item name','Price(per item)','Quantity']
+    items=[[item.id,item.name,item.price,item.quantity] for item in Item.objects.all()]
+    with open("data.csv","w") as file:
+        writer=csv.writer(file)
+        writer.writerow(header)
+        writer.writerows(items)
+    return JsonResponse("Items data exported to data.csv file",safe=False)
